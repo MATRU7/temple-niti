@@ -50,12 +50,12 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 // ── NoSQL Injection Prevention ────────────────────────────────────────────────
-app.use(mongoSanitize({
-    replaceWith: '_',
-    onSanitize: ({ req, key }) => {
-        console.warn(`Sanitized key: ${key} in ${req.path}`);
-    }
-}));
+// app.use(mongoSanitize({
+//     replaceWith: '_',
+//     onSanitize: ({ req, key }) => {
+//         console.warn(`Sanitized key: ${key} in ${req.path}`);
+//     }
+// }));
 
 // ── Static file serving ───────────────────────────────────────────────────────
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
