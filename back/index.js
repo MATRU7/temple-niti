@@ -86,31 +86,35 @@ app.use((req, res) => {
 // ── Global Error Handler (must be last) ──────────────────────────────────────
 app.use(errorHandler);
 
-// ── Start Server ──────────────────────────────────────────────────────────────
-const server = app.listen(PORT, () => {
-    console.log(`\n🛕  Temple Niti API started`);
-    console.log(`📡  Port      : ${PORT}`);
-    console.log(`🌐  Frontend  : ${FRONTEND_URL}`);
-    console.log(`🔧  Mode      : ${process.env.NODE_ENV || 'development'}\n`);
-    connectToDB();
-});
-
-// ── Graceful Shutdown ─────────────────────────────────────────────────────────
-function gracefulShutdown(signal) {
-    console.log(`\n🛑  Received ${signal}. Shutting down gracefully...`);
-    server.close(() => {
-        console.log('✅  HTTP server closed.');
-        process.exit(0);
+// ── Start Server (Local only) ─────────────────────────────────────────────────
+if (process.env.NODE_ENV !== 'production') {
+    const server = app.listen(PORT, () => {
+        console.log(`\n🛕  Temple Niti API started`);
+        console.log(`📡  Port      : ${PORT}`);
+        console.log(`🌐  Frontend  : ${FRONTEND_URL}`);
+        console.log(`🔧  Mode      : ${process.env.NODE_ENV || 'development'}\n`);
+        connectToDB();
     });
-    // Force close after 10 seconds
-    setTimeout(() => {
-        console.error('⚠️  Forced shutdown after timeout.');
-        process.exit(1);
-    }, 10000);
-}
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    // ── Graceful Shutdown ─────────────────────────────────────────────────────────
+    function gracefulShutdown(signal) {
+        console.log(`\n🛑  Received ${signal}. Shutting down gracefully...`);
+        server.close(() => {
+            console.log('✅  HTTP server closed.');
+            process.exit(0);
+        });
+        setTimeout(() => {
+            console.error('⚠️  Forced shutdown after timeout.');
+            process.exit(1);
+        }, 10000);
+    }
+
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+} else {
+    // In production (Vercel), we connect to the database on every cold start
+    connectToDB();
+}
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
@@ -121,3 +125,6 @@ process.on('uncaughtException', (err) => {
     console.error('🔴 Uncaught Exception:', err);
     process.exit(1);
 });
+
+// Export the app for Vercel Serverless Functions
+export default app;
